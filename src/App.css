@@ -1,0 +1,11 @@
+/* App.css — optional component-level styles */
+
+.main-container {
+  min-height: 100vh;
+  background-color: #f7f8fa;
+  padding-top: 20px;
+}
+
+h2 {
+  font-weight: 600;
+}
