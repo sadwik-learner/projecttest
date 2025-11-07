@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from "firebase/auth";
+
 import {
   collection,
   addDoc,
