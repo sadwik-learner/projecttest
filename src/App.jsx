@@ -197,12 +197,108 @@ export default function App() {
       </nav>
 
       <div className="container mt-4">
-        {view === "home" && (
-          <div className="text-center mt-5">
-            <h2 className="text-primary">Welcome to VNRVJIET Connect</h2>
-            <p className="lead">Stay connected with peers, alumni, and mentors.</p>
+       {view === "home" && (
+  <div className="container mt-4">
+    <div className="text-center mb-4">
+      <h2 className="fw-bold text-primary">Welcome to VNRVJIET Connect 🎓</h2>
+      <p className="text-muted">
+        Stay connected, collaborate, and grow with your peers, faculty, and alumni.
+      </p>
+    </div>
+
+    {/* --- Events & Announcements --- */}
+    <div className="row g-4 mb-5">
+      <div className="col-md-6">
+        <div className="card border-0 shadow-sm p-4 h-100 bg-light">
+          <h4 className="text-primary mb-3">Upcoming Events 📅</h4>
+          <ul className="list-unstyled">
+            <li className="mb-3">
+              <strong>Hackathon 2025</strong><br />
+              <small>24–26 March • CSE Dept</small><br />
+              <span className="badge bg-success mt-1">Register Open</span>
+            </li>
+            <li className="mb-3">
+              <strong>AI Workshop</strong><br />
+              <small>2 April • Seminar Hall</small>
+            </li>
+            <li>
+              <strong>Alumni Talk: Career in Product Design</strong><br />
+              <small>10 April • Auditorium</small>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="col-md-6">
+        <div className="card border-0 shadow-sm p-4 h-100 bg-light">
+          <h4 className="text-primary mb-3">College News 📰</h4>
+          <div className="news-item mb-3">
+            <strong>VNRVJIET ranked among Top 10 private colleges</strong>
+            <p className="small text-muted mb-0">
+              Recognized by NIRF 2025 for excellence in innovation & research.
+            </p>
           </div>
-        )}
+          <div className="news-item mb-3">
+            <strong>New Center for Robotics launched</strong>
+            <p className="small text-muted mb-0">
+              Collaboration with IIT Hyderabad to boost automation learning.
+            </p>
+          </div>
+          <div className="news-item">
+            <strong>Admissions 2025 opening soon</strong>
+            <p className="small text-muted mb-0">
+              Stay tuned for official circulars and registration updates.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* --- Forum Preview --- */}
+    <div className="card shadow-sm p-4 mb-5 bg-white">
+      <h4 className="text-primary mb-3">Recent Discussions 💬</h4>
+      {posts.length === 0 ? (
+        <p className="text-muted">
+          No discussions yet. <span className="link-primary" onClick={() => setView("forum")}>Start one in the Forum!</span>
+        </p>
+      ) : (
+        posts.slice(0, 3).map((p) => (
+          <div key={p.id} className="border-bottom pb-2 mb-3">
+            <strong>{p.userName}</strong>
+            <p className="mb-1">{p.text}</p>
+            <small className="text-muted">
+              {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
+            </small>
+          </div>
+        ))
+      )}
+    </div>
+
+    {/* --- Skill Exchange / Barter --- */}
+    <div className="card shadow-sm p-4 bg-light">
+      <h4 className="text-primary mb-3">Skill Exchange 🤝</h4>
+      <p className="text-muted mb-3">
+        Share your skills or learn from others in the VNRVJIET community. 
+        Connect with peers through collaboration and mentorship.
+      </p>
+      <div className="d-flex flex-wrap gap-3">
+        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+          <h6 className="fw-bold mb-1">Python & Data Science</h6>
+          <small>Offered by: Harika (CSE)</small>
+        </div>
+        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+          <h6 className="fw-bold mb-1">UI/UX Design</h6>
+          <small>Looking to Learn</small>
+        </div>
+        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+          <h6 className="fw-bold mb-1">Machine Learning Basics</h6>
+          <small>Offered by: Arjun (AI)</small>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
 
         {view === "forum" && (
           <div>
