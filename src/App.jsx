@@ -19,6 +19,8 @@ import {
 import { auth, db } from "./firebase";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
+import ForumPost from "./ForumPost";
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -299,41 +301,58 @@ export default function App() {
   </div>
 )}
 
+{view === "forum" && (
+  <div className="container mt-4">
+    <h2 className="text-center fw-bold text-primary mb-4">
+      VNRVJIET Forum 💬
+    </h2>
+    <p className="text-muted text-center mb-4">
+      Ask questions, share experiences, and collaborate with your peers!
+    </p>
 
-        {view === "forum" && (
-          <div>
-            <h3 className="text-primary mb-3">Discussion Forum</h3>
-            <div className="card p-3 mb-3">
-              <textarea
-                className="form-control mb-2"
-                rows="3"
-                value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
-                placeholder="Write something..."
-              ></textarea>
-              <div className="form-check mb-2">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  checked={anonymous}
-                  onChange={(e) => setAnonymous(e.target.checked)}
-                />
-                <label className="form-check-label">Post anonymously</label>
-              </div>
-              <button className="btn btn-primary" onClick={postMessage}>Post</button>
-            </div>
+    {/* --- Create Post --- */}
+    <div className="card shadow-sm p-4 mb-4 bg-light">
+      <h5 className="text-secondary fw-semibold mb-3">Create a New Discussion</h5>
+      <textarea
+        className="form-control mb-3"
+        placeholder="Type your question, idea, or topic..."
+        rows="3"
+        value={postText}
+        onChange={(e) => setPostText(e.target.value)}
+      ></textarea>
+      <button
+        className="btn btn-primary px-4"
+        onClick={handlePostSubmit}
+      >
+        Post
+      </button>
+    </div>
 
-            {posts.map((p) => (
-              <div key={p.id} className="border rounded p-3 mb-2">
-                <strong>{p.userName}</strong>
-                <p className="mb-1">{p.text}</p>
-                <small className="text-muted">
-                  {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
-                </small>
-              </div>
-            ))}
-          </div>
-        )}
+    {/* --- Forum Feed --- */}
+    <div className="forum-feed">
+      {posts.length === 0 ? (
+        <div className="text-center text-muted mt-5">
+          <h5>No discussions yet 🚀</h5>
+          <p>Start the first one above!</p>
+        </div>
+      ) : (
+        posts
+          .slice()
+          .reverse()
+          .map((p) => (
+            <ForumPost
+              key={p.id}
+              post={p}
+              db={db}
+              currentUser={user}
+            />
+          ))
+      )}
+    </div>
+  </div>
+)}
+
+
 
         {view === "profile" && profile && (
           <div className="card shadow p-4">

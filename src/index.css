@@ -17,3 +17,46 @@ select:focus {
   transform: translateY(-3px);
   transition: 0.2s ease-in-out;
 }
+/* Forum styling */
+.forum-card:hover {
+  transform: translateY(-2px);
+  transition: all 0.2s ease-in-out;
+  background-color: #fdfdfd;
+}
+
+.avatar-circle {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+textarea.form-control {
+  resize: none;
+  border-radius: 10px;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+  transform: scale(1.05);
+}
+.comment-section {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 10px;
+}
+
+.comment-section input {
+  border-radius: 8px;
+}
+
+.comment-section button {
+  border-radius: 8px;
+}
+
+.comment-list {
+  max-height: 120px;
+  overflow-y: auto;
+}
