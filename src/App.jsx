@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -6,7 +6,6 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from "firebase/auth";
-
 import {
   collection,
   addDoc,
@@ -18,6 +17,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./index.css";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -26,8 +27,8 @@ export default function App() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
   const [anonymous, setAnonymous] = useState(false);
+  const [profile, setProfile] = useState(null);
 
-  // Firestore listeners
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -45,7 +46,6 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // ✅ Signup
   const signup = async (e) => {
     e.preventDefault();
     const name = e.target.name.value;
@@ -81,7 +81,6 @@ export default function App() {
     }
   };
 
-  // ✅ Login
   const login = async (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -93,12 +92,10 @@ export default function App() {
     }
   };
 
-  // ✅ Logout
   const logout = async () => {
     await signOut(auth);
   };
 
-  // ✅ Post
   const postMessage = async () => {
     if (!newPost.trim()) return;
     await addDoc(collection(db, "posts"), {
@@ -110,9 +107,19 @@ export default function App() {
     setNewPost("");
   };
 
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      const q = query(collection(db, "profiles"), where("uid", "==", user.uid));
+      const snap = await getDocs(q);
+      if (!snap.empty) setProfile(snap.docs[0].data());
+    };
+    fetchProfile();
+  }, [user]);
+
   if (loading) return <div className="p-5 text-center">Loading...</div>;
 
-  // ---------------------------- LOGIN ----------------------------
+  // -------------------- LOGIN --------------------
   if (!user && view === "login")
     return (
       <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
@@ -132,7 +139,7 @@ export default function App() {
       </div>
     );
 
-  // ---------------------------- SIGNUP ----------------------------
+  // -------------------- SIGNUP --------------------
   if (!user && view === "signup")
     return (
       <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
@@ -176,19 +183,7 @@ export default function App() {
       </div>
     );
 
-  // ---------------------------- PROFILE COMPONENT ----------------------------
-  const [profile, setProfile] = useState(null);
-  useEffect(() => {
-    if (!user) return;
-    const fetchProfile = async () => {
-      const q = query(collection(db, "profiles"), where("uid", "==", user.uid));
-      const snap = await getDocs(q);
-      if (!snap.empty) setProfile(snap.docs[0].data());
-    };
-    fetchProfile();
-  }, [user]);
-
-  // ---------------------------- MAIN APP ----------------------------
+  // -------------------- MAIN APP --------------------
   return (
     <div>
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-4">
@@ -202,7 +197,6 @@ export default function App() {
       </nav>
 
       <div className="container mt-4">
-        {/* HOME */}
         {view === "home" && (
           <div className="text-center mt-5">
             <h2 className="text-primary">Welcome to VNRVJIET Connect</h2>
@@ -210,7 +204,6 @@ export default function App() {
           </div>
         )}
 
-        {/* FORUM */}
         {view === "forum" && (
           <div>
             <h3 className="text-primary mb-3">Discussion Forum</h3>
@@ -246,7 +239,6 @@ export default function App() {
           </div>
         )}
 
-        {/* PROFILE */}
         {view === "profile" && profile && (
           <div className="card shadow p-4">
             <h3 className="text-primary">{profile.name}</h3>
@@ -263,4 +255,3 @@ export default function App() {
     </div>
   );
 }
-
