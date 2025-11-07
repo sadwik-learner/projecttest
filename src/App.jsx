@@ -19,10 +19,7 @@ import {
 import { auth, db } from "./firebase";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
-import ForumPost from "./ForumPost";
- import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import ForumPost from "./ForumPost.jsx";
 
 export default function App() {
   const [user, setUser] = useState(null);
