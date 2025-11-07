@@ -60,3 +60,12 @@ textarea.form-control {
   max-height: 120px;
   overflow-y: auto;
 }
+.skill-card:hover {
+  transform: translateY(-3px);
+  transition: 0.2s ease;
+}
+
+textarea.form-control,
+input.form-control {
+  border-radius: 10px;
+}

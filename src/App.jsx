@@ -20,7 +20,9 @@ import { auth, db } from "./firebase";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import ForumPost from "./ForumPost";
-
+ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebase";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -30,6 +32,11 @@ export default function App() {
   const [newPost, setNewPost] = useState("");
   const [anonymous, setAnonymous] = useState(false);
   const [profile, setProfile] = useState(null);
+  // Skill Barter System state
+const [skills, setSkills] = useState([]);
+const [newSkill, setNewSkill] = useState("");
+const [newDescription, setNewDescription] = useState("");
+
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (u) => {
@@ -47,6 +54,15 @@ export default function App() {
     });
     return () => unsub();
   }, []);
+  // Real-time listener for Skill Barter posts
+useEffect(() => {
+  const q = query(collection(db, "skills"), orderBy("createdAt", "desc"));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    setSkills(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  });
+  return () => unsubscribe();
+}, []);
+
 
   const signup = async (e) => {
     e.preventDefault();
@@ -98,26 +114,64 @@ export default function App() {
     await signOut(auth);
   };
 
-  const postMessage = async () => {
-    if (!newPost.trim()) return;
-    await addDoc(collection(db, "posts"), {
-      text: newPost.trim(),
-      userName: anonymous ? "Anonymous" : user.displayName,
-      userId: user.uid,
+
+
+const handlePostSubmit = async () => {
+  if (!postText.trim()) {
+    alert("Please enter something before posting!");
+    return;
+  }
+  const handleAddSkill = async () => {
+  if (!newSkill.trim() || !newDescription.trim()) {
+    alert("Please fill out both fields before posting.");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "skills"), {
+      title: newSkill.trim(),
+      description: newDescription.trim(),
+      userName: user?.displayName || user?.email || "Anonymous",
       createdAt: serverTimestamp(),
     });
-    setNewPost("");
-  };
+    setNewSkill("");
+    setNewDescription("");
+    console.log("✅ Skill added successfully!");
+  } catch (error) {
+    console.error("❌ Error adding skill:", error);
+    alert("Error posting skill: " + error.message);
+  }
+};
 
-  useEffect(() => {
-    if (!user) return;
-    const fetchProfile = async () => {
-      const q = query(collection(db, "profiles"), where("uid", "==", user.uid));
-      const snap = await getDocs(q);
-      if (!snap.empty) setProfile(snap.docs[0].data());
-    };
-    fetchProfile();
-  }, [user]);
+  try {
+    await addDoc(collection(db, "posts"), {
+      text: postText,
+      userName: user?.email || "Anonymous",
+      createdAt: serverTimestamp(),
+      likes: 0,
+    });
+    console.log("✅ Post added successfully!");
+    setPostText("");
+  } catch (error) {
+    console.error("❌ Error adding post:", error);
+    alert("Error creating post: " + error.message);
+  }
+};
+
+
+
+// Posts state
+const [posts1, setPosts1] = useState([]);
+
+// Real-time post updates
+useEffect(() => {
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    setPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  });
+  return () => unsubscribe();
+}, []);
+
 
   if (loading) return <div className="p-5 text-center">Loading...</div>;
 
@@ -194,6 +248,8 @@ export default function App() {
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("home")}>Home</button>
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("forum")}>Forum</button>
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("profile")}>Profile</button>
+          <button className="btn btn-sm btn-outline-light" onClick={() => setView("skills")}>Skill Barter</button>
+
           <button className="btn btn-sm btn-danger" onClick={logout}>Logout</button>
         </div>
       </nav>
@@ -351,6 +407,61 @@ export default function App() {
     </div>
   </div>
 )}
+{view === "skills" && (
+  <div className="container mt-4">
+    <h2 className="text-center text-primary fw-bold mb-3">
+      Skill-Sharing & Barter System 🤝
+    </h2>
+    <p className="text-muted text-center mb-4">
+      Offer your skills or request help from others. Let’s learn and grow together!
+    </p>
+
+    {/* --- Create Skill Offer/Request --- */}
+    <div className="card shadow-sm p-4 mb-4 bg-light">
+      <h5 className="text-secondary fw-semibold mb-3">Share Your Skill</h5>
+      <input
+        type="text"
+        className="form-control mb-2"
+        placeholder="Skill title (e.g., Web Development, Data Analysis)"
+        value={newSkill}
+        onChange={(e) => setNewSkill(e.target.value)}
+      />
+      <textarea
+        className="form-control mb-3"
+        rows="3"
+        placeholder="Describe what you can teach or what you’d like to learn..."
+        value={newDescription}
+        onChange={(e) => setNewDescription(e.target.value)}
+      ></textarea>
+      <button className="btn btn-success" onClick={handleAddSkill}>
+        Post Skill
+      </button>
+    </div>
+
+    {/* --- Skill List --- */}
+    <div className="row">
+      {skills.length === 0 ? (
+        <div className="text-center text-muted mt-5">
+          <h5>No skills shared yet 🚀</h5>
+          <p>Be the first to start collaborating!</p>
+        </div>
+      ) : (
+        skills.map((skill) => (
+          <div key={skill.id} className="col-md-6 mb-4">
+            <div className="card shadow-sm p-3 border-0 h-100">
+              <h5 className="text-primary">{skill.title}</h5>
+              <p className="mb-2">{skill.description}</p>
+              <small className="text-muted">
+                Posted by: {skill.userName || "Anonymous"}
+              </small>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
+
 
 
 
