@@ -69,3 +69,95 @@ textarea.form-control,
 input.form-control {
   border-radius: 10px;
 }
+/* Forum Container */
+.forum-container {
+  display: flex;
+  flex-direction: column;
+  height: 75vh;
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: #f9fafc;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.forum-title {
+  text-align: center;
+  font-weight: bold;
+  color: #2563eb;
+  margin-bottom: 10px;
+}
+
+/* Chat Box */
+.chat-box {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+/* Chat Message */
+.chat-message {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.chat-left {
+  justify-content: flex-start;
+}
+
+.chat-right {
+  justify-content: flex-end;
+}
+
+.chat-bubble {
+  max-width: 70%;
+  padding: 10px 15px;
+  border-radius: 15px;
+  background-color: #e5e7eb;
+  color: #111;
+  font-size: 15px;
+  position: relative;
+}
+
+.chat-right .chat-bubble {
+  background-color: #2563eb;
+  color: white;
+}
+
+.chat-username {
+  font-size: 13px;
+  font-weight: bold;
+  display: block;
+}
+
+.chat-time {
+  font-size: 11px;
+  color: #9ca3af;
+  display: block;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Chat Input */
+.chat-input {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.chat-input input {
+  flex: 1;
+  border-radius: 20px;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+}
+
+.chat-input button {
+  border-radius: 20px;
+  padding: 10px 20px;
+}

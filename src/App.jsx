@@ -22,19 +22,26 @@ import "./index.css";
 import ForumPost from "./ForumPost.jsx";
 
 export default function App() {
+  // Auth + navigation state
   const [user, setUser] = useState(null);
   const [view, setView] = useState("login");
   const [loading, setLoading] = useState(true);
+
+  // Posts for Home preview (separate from forumMessages used by chat)
   const [posts, setPosts] = useState([]);
-  const [newPost, setNewPost] = useState("");
-  const [anonymous, setAnonymous] = useState(false);
+  const [postText, setPostText] = useState("");
+
+  // Forum chat messages are handled inside ForumPost component (forumMessages collection)
+
+  // Profile state
   const [profile, setProfile] = useState(null);
+
   // Skill Barter System state
-const [skills, setSkills] = useState([]);
-const [newSkill, setNewSkill] = useState("");
-const [newDescription, setNewDescription] = useState("");
+  const [skills, setSkills] = useState([]);
+  const [newSkill, setNewSkill] = useState("");
+  const [newDescription, setNewDescription] = useState("");
 
-
+  // ---------- Auth listener ----------
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -44,6 +51,7 @@ const [newDescription, setNewDescription] = useState("");
     return () => unsubAuth();
   }, []);
 
+  // ---------- posts listener (for Home preview) ----------
   useEffect(() => {
     const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -51,16 +59,31 @@ const [newDescription, setNewDescription] = useState("");
     });
     return () => unsub();
   }, []);
-  // Real-time listener for Skill Barter posts
-useEffect(() => {
-  const q = query(collection(db, "skills"), orderBy("createdAt", "desc"));
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    setSkills(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-  });
-  return () => unsubscribe();
-}, []);
 
+  // ---------- skills listener ----------
+  useEffect(() => {
+    const q = query(collection(db, "skills"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setSkills(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, []);
 
+  // ---------- user profile fetch (on login) ----------
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    const fetchProfile = async () => {
+      const q = query(collection(db, "profiles"), where("uid", "==", user.uid));
+      const snap = await getDocs(q);
+      if (!snap.empty) setProfile(snap.docs[0].data());
+    };
+    fetchProfile();
+  }, [user]);
+
+  // ---------- Signup ----------
   const signup = async (e) => {
     e.preventDefault();
     const name = e.target.name.value;
@@ -69,7 +92,7 @@ useEffect(() => {
     const role = e.target.role.value;
     const branch = e.target.branch.value;
     const bio = e.target.bio.value;
-    const skills = e.target.skills.value;
+    const skillsInput = e.target.skills.value;
     const interests = e.target.interests.value;
     const contact = e.target.contact.value;
 
@@ -84,7 +107,7 @@ useEffect(() => {
         role,
         branch,
         bio,
-        skills,
+        skills: skillsInput,
         interests,
         contact,
         createdAt: serverTimestamp(),
@@ -96,6 +119,7 @@ useEffect(() => {
     }
   };
 
+  // ---------- Login ----------
   const login = async (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -107,68 +131,52 @@ useEffect(() => {
     }
   };
 
+  // ---------- Logout ----------
   const logout = async () => {
     await signOut(auth);
   };
 
+  // ---------- Create a short post (for home preview) ----------
+  const handleCreatePost = async () => {
+    if (!postText.trim()) {
+      alert("Please enter something before posting!");
+      return;
+    }
+    try {
+      await addDoc(collection(db, "posts"), {
+        text: postText.trim(),
+        userName: user?.displayName || user?.email || "Anonymous",
+        createdAt: serverTimestamp(),
+        likes: 0,
+      });
+      setPostText("");
+    } catch (error) {
+      console.error("Error adding post:", error);
+      alert("Error creating post: " + error.message);
+    }
+  };
 
-
-const handlePostSubmit = async () => {
-  if (!postText.trim()) {
-    alert("Please enter something before posting!");
-    return;
-  }
+  // ---------- Add skill (skill barter) ----------
   const handleAddSkill = async () => {
-  if (!newSkill.trim() || !newDescription.trim()) {
-    alert("Please fill out both fields before posting.");
-    return;
-  }
+    if (!newSkill.trim() || !newDescription.trim()) {
+      alert("Please fill out both fields before posting.");
+      return;
+    }
 
-  try {
-    await addDoc(collection(db, "skills"), {
-      title: newSkill.trim(),
-      description: newDescription.trim(),
-      userName: user?.displayName || user?.email || "Anonymous",
-      createdAt: serverTimestamp(),
-    });
-    setNewSkill("");
-    setNewDescription("");
-    console.log("✅ Skill added successfully!");
-  } catch (error) {
-    console.error("❌ Error adding skill:", error);
-    alert("Error posting skill: " + error.message);
-  }
-};
-
-  try {
-    await addDoc(collection(db, "posts"), {
-      text: postText,
-      userName: user?.email || "Anonymous",
-      createdAt: serverTimestamp(),
-      likes: 0,
-    });
-    console.log("✅ Post added successfully!");
-    setPostText("");
-  } catch (error) {
-    console.error("❌ Error adding post:", error);
-    alert("Error creating post: " + error.message);
-  }
-};
-
-
-
-// Posts state
-const [posts1, setPosts1] = useState([]);
-
-// Real-time post updates
-useEffect(() => {
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    setPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-  });
-  return () => unsubscribe();
-}, []);
-
+    try {
+      await addDoc(collection(db, "skills"), {
+        title: newSkill.trim(),
+        description: newDescription.trim(),
+        userName: user?.displayName || user?.email || "Anonymous",
+        createdAt: serverTimestamp(),
+      });
+      setNewSkill("");
+      setNewDescription("");
+    } catch (error) {
+      console.error("Error adding skill:", error);
+      alert("Error posting skill: " + error.message);
+    }
+  };
 
   if (loading) return <div className="p-5 text-center">Loading...</div>;
 
@@ -182,7 +190,9 @@ useEffect(() => {
           <form onSubmit={login}>
             <input name="email" type="email" className="form-control mb-3" placeholder="Email" required />
             <input name="password" type="password" className="form-control mb-3" placeholder="Password" required />
-            <button className="btn btn-primary w-100">Login</button>
+            <div className="d-grid">
+              <button className="btn btn-primary w-100">Login</button>
+            </div>
           </form>
           <p className="text-center mt-3">
             Don’t have an account?{" "}
@@ -226,7 +236,9 @@ useEffect(() => {
             <input name="interests" className="form-control mb-3" placeholder="Interests (e.g., AI, Robotics, Design)" />
             <input name="contact" className="form-control mb-3" placeholder="Contact info (Email / LinkedIn)" />
 
-            <button className="btn btn-success w-100">Sign Up</button>
+            <div className="d-grid">
+              <button className="btn btn-success w-100">Sign Up</button>
+            </div>
           </form>
           <p className="text-center mt-3">
             Already have an account?{" "}
@@ -246,233 +258,201 @@ useEffect(() => {
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("forum")}>Forum</button>
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("profile")}>Profile</button>
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("skills")}>Skill Barter</button>
-
           <button className="btn btn-sm btn-danger" onClick={logout}>Logout</button>
         </div>
       </nav>
 
       <div className="container mt-4">
-       {view === "home" && (
-  <div className="container mt-4">
-    <div className="text-center mb-4">
-      <h2 className="fw-bold text-primary">Welcome to VNRVJIET Connect 🎓</h2>
-      <p className="text-muted">
-        Stay connected, collaborate, and grow with your peers, faculty, and alumni.
-      </p>
-    </div>
+        {view === "home" && (
+          <div className="container mt-4">
+            <div className="text-center mb-4">
+              <h2 className="fw-bold text-primary">Welcome to VNRVJIET Connect 🎓</h2>
+              <p className="text-muted">
+                Stay connected, collaborate, and grow with your peers, faculty, and alumni.
+              </p>
+            </div>
 
-    {/* --- Events & Announcements --- */}
-    <div className="row g-4 mb-5">
-      <div className="col-md-6">
-        <div className="card border-0 shadow-sm p-4 h-100 bg-light">
-          <h4 className="text-primary mb-3">Upcoming Events 📅</h4>
-          <ul className="list-unstyled">
-            <li className="mb-3">
-              <strong>Hackathon 2025</strong><br />
-              <small>24–26 March • CSE Dept</small><br />
-              <span className="badge bg-success mt-1">Register Open</span>
-            </li>
-            <li className="mb-3">
-              <strong>AI Workshop</strong><br />
-              <small>2 April • Seminar Hall</small>
-            </li>
-            <li>
-              <strong>Alumni Talk: Career in Product Design</strong><br />
-              <small>10 April • Auditorium</small>
-            </li>
-          </ul>
-        </div>
-      </div>
+            {/* Events & Announcements (same as before) */}
+            <div className="row g-4 mb-5">
+              <div className="col-md-6">
+                <div className="card border-0 shadow-sm p-4 h-100 bg-light">
+                  <h4 className="text-primary mb-3">Upcoming Events 📅</h4>
+                  <ul className="list-unstyled">
+                    <li className="mb-3">
+                      <strong>Hackathon 2025</strong><br />
+                      <small>24–26 March • CSE Dept</small><br />
+                      <span className="badge bg-success mt-1">Register Open</span>
+                    </li>
+                    <li className="mb-3">
+                      <strong>AI Workshop</strong><br />
+                      <small>2 April • Seminar Hall</small>
+                    </li>
+                    <li>
+                      <strong>Alumni Talk: Career in Product Design</strong><br />
+                      <small>10 April • Auditorium</small>
+                    </li>
+                  </ul>
+                </div>
+              </div>
 
-      <div className="col-md-6">
-        <div className="card border-0 shadow-sm p-4 h-100 bg-light">
-          <h4 className="text-primary mb-3">College News 📰</h4>
-          <div className="news-item mb-3">
-            <strong>VNRVJIET ranked among Top 10 private colleges</strong>
-            <p className="small text-muted mb-0">
-              Recognized by NIRF 2025 for excellence in innovation & research.
-            </p>
-          </div>
-          <div className="news-item mb-3">
-            <strong>New Center for Robotics launched</strong>
-            <p className="small text-muted mb-0">
-              Collaboration with IIT Hyderabad to boost automation learning.
-            </p>
-          </div>
-          <div className="news-item">
-            <strong>Admissions 2025 opening soon</strong>
-            <p className="small text-muted mb-0">
-              Stay tuned for official circulars and registration updates.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+              <div className="col-md-6">
+                <div className="card border-0 shadow-sm p-4 h-100 bg-light">
+                  <h4 className="text-primary mb-3">College News 📰</h4>
+                  <div className="news-item mb-3">
+                    <strong>VNRVJIET ranked among Top 10 private colleges</strong>
+                    <p className="small text-muted mb-0">
+                      Recognized by NIRF 2025 for excellence in innovation & research.
+                    </p>
+                  </div>
+                  <div className="news-item mb-3">
+                    <strong>New Center for Robotics launched</strong>
+                    <p className="small text-muted mb-0">
+                      Collaboration with IIT Hyderabad to boost automation learning.
+                    </p>
+                  </div>
+                  <div className="news-item">
+                    <strong>Admissions 2025 opening soon</strong>
+                    <p className="small text-muted mb-0">
+                      Stay tuned for official circulars and registration updates.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-    {/* --- Forum Preview --- */}
-    <div className="card shadow-sm p-4 mb-5 bg-white">
-      <h4 className="text-primary mb-3">Recent Discussions 💬</h4>
-      {posts.length === 0 ? (
-        <p className="text-muted">
-          No discussions yet. <span className="link-primary" onClick={() => setView("forum")}>Start one in the Forum!</span>
-        </p>
-      ) : (
-        posts.slice(0, 3).map((p) => (
-          <div key={p.id} className="border-bottom pb-2 mb-3">
-            <strong>{p.userName}</strong>
-            <p className="mb-1">{p.text}</p>
-            <small className="text-muted">
-              {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
-            </small>
-          </div>
-        ))
-      )}
-    </div>
+            {/* Forum Preview */}
+            <div className="card shadow-sm p-4 mb-5 bg-white">
+              <h4 className="text-primary mb-3">Recent Discussions 💬</h4>
+              {posts.length === 0 ? (
+                <p className="text-muted">
+                  No discussions yet. <span className="link-primary" onClick={() => setView("forum")}>Start one in the Forum!</span>
+                </p>
+              ) : (
+                posts.slice(0, 3).map((p) => (
+                  <div key={p.id} className="border-bottom pb-2 mb-3">
+                    <strong>{p.userName}</strong>
+                    <p className="mb-1">{p.text}</p>
+                    <small className="text-muted">
+                      {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
+                    </small>
+                  </div>
+                ))
+              )}
+            </div>
 
-    {/* --- Skill Exchange / Barter --- */}
-    <div className="card shadow-sm p-4 bg-light">
-      <h4 className="text-primary mb-3">Skill Exchange 🤝</h4>
-      <p className="text-muted mb-3">
-        Share your skills or learn from others in the VNRVJIET community. 
-        Connect with peers through collaboration and mentorship.
-      </p>
-      <div className="d-flex flex-wrap gap-3">
-        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
-          <h6 className="fw-bold mb-1">Python & Data Science</h6>
-          <small>Offered by: Harika (CSE)</small>
-        </div>
-        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
-          <h6 className="fw-bold mb-1">UI/UX Design</h6>
-          <small>Looking to Learn</small>
-        </div>
-        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
-          <h6 className="fw-bold mb-1">Machine Learning Basics</h6>
-          <small>Offered by: Arjun (AI)</small>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+            {/* Quick post (for Home preview) */}
+            <div className="card p-3 mb-4">
+              <textarea className="form-control mb-2" rows="2" value={postText} onChange={(e) => setPostText(e.target.value)} placeholder="Share a quick update..."></textarea>
+              <div className="d-flex gap-2">
+                <button className="btn btn-primary" onClick={handleCreatePost}>Post</button>
+              </div>
+            </div>
 
-{view === "forum" && (
-  <div className="container mt-4">
-    <h2 className="text-center fw-bold text-primary mb-4">
-      VNRVJIET Forum 💬
-    </h2>
-    <p className="text-muted text-center mb-4">
-      Ask questions, share experiences, and collaborate with your peers!
-    </p>
-
-    {/* --- Create Post --- */}
-    <div className="card shadow-sm p-4 mb-4 bg-light">
-      <h5 className="text-secondary fw-semibold mb-3">Create a New Discussion</h5>
-      <textarea
-        className="form-control mb-3"
-        placeholder="Type your question, idea, or topic..."
-        rows="3"
-        value={postText}
-        onChange={(e) => setPostText(e.target.value)}
-      ></textarea>
-      <button
-        className="btn btn-primary px-4"
-        onClick={handlePostSubmit}
-      >
-        Post
-      </button>
-    </div>
-
-    {/* --- Forum Feed --- */}
-    <div className="forum-feed">
-      {posts.length === 0 ? (
-        <div className="text-center text-muted mt-5">
-          <h5>No discussions yet 🚀</h5>
-          <p>Start the first one above!</p>
-        </div>
-      ) : (
-        posts
-          .slice()
-          .reverse()
-          .map((p) => (
-            <ForumPost
-              key={p.id}
-              post={p}
-              db={db}
-              currentUser={user}
-            />
-          ))
-      )}
-    </div>
-  </div>
-)}
-{view === "skills" && (
-  <div className="container mt-4">
-    <h2 className="text-center text-primary fw-bold mb-3">
-      Skill-Sharing & Barter System 🤝
-    </h2>
-    <p className="text-muted text-center mb-4">
-      Offer your skills or request help from others. Let’s learn and grow together!
-    </p>
-
-    {/* --- Create Skill Offer/Request --- */}
-    <div className="card shadow-sm p-4 mb-4 bg-light">
-      <h5 className="text-secondary fw-semibold mb-3">Share Your Skill</h5>
-      <input
-        type="text"
-        className="form-control mb-2"
-        placeholder="Skill title (e.g., Web Development, Data Analysis)"
-        value={newSkill}
-        onChange={(e) => setNewSkill(e.target.value)}
-      />
-      <textarea
-        className="form-control mb-3"
-        rows="3"
-        placeholder="Describe what you can teach or what you’d like to learn..."
-        value={newDescription}
-        onChange={(e) => setNewDescription(e.target.value)}
-      ></textarea>
-      <button className="btn btn-success" onClick={handleAddSkill}>
-        Post Skill
-      </button>
-    </div>
-
-    {/* --- Skill List --- */}
-    <div className="row">
-      {skills.length === 0 ? (
-        <div className="text-center text-muted mt-5">
-          <h5>No skills shared yet 🚀</h5>
-          <p>Be the first to start collaborating!</p>
-        </div>
-      ) : (
-        skills.map((skill) => (
-          <div key={skill.id} className="col-md-6 mb-4">
-            <div className="card shadow-sm p-3 border-0 h-100">
-              <h5 className="text-primary">{skill.title}</h5>
-              <p className="mb-2">{skill.description}</p>
-              <small className="text-muted">
-                Posted by: {skill.userName || "Anonymous"}
-              </small>
+            {/* Skill Exchange preview */}
+            <div className="card shadow-sm p-4 bg-light">
+              <h4 className="text-primary mb-3">Skill Exchange 🤝</h4>
+              <p className="text-muted mb-3">
+                Share your skills or learn from others in the VNRVJIET community.
+              </p>
+              <div className="d-flex flex-wrap gap-3">
+                {skills.slice(0,3).map(s => (
+                  <div key={s.id} className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+                    <h6 className="fw-bold mb-1">{s.title}</h6>
+                    <small>Offered by: {s.userName}</small>
+                  </div>
+                ))}
+                {skills.length === 0 && (
+                  <>
+                    <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+                      <h6 className="fw-bold mb-1">No skills yet</h6>
+                      <small>Be the first to post</small>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
+        )}
 
-
-
-
-        {view === "profile" && profile && (
-          <div className="card shadow p-4">
-            <h3 className="text-primary">{profile.name}</h3>
-            <h6 className="text-muted mb-3">
-              {profile.role?.toUpperCase()} • {profile.branch || "N/A"}
-            </h6>
-            <p><strong>Bio:</strong> {profile.bio || "Not provided"}</p>
-            <p><strong>Skills:</strong> {profile.skills || "Not specified"}</p>
-            <p><strong>Interests:</strong> {profile.interests || "Not specified"}</p>
-            <p><strong>Contact:</strong> {profile.contact || "N/A"}</p>
+        {/* Forum (chat-style) */}
+        {view === "forum" && (
+          <div className="container mt-4">
+            <ForumPost db={db} user={user} />
           </div>
+        )}
+
+        {/* Skill Barter */}
+        {view === "skills" && (
+          <div className="container mt-4">
+            <h2 className="text-center text-primary fw-bold mb-3">
+              Skill-Sharing & Barter System 🤝
+            </h2>
+            <p className="text-muted text-center mb-4">
+              Offer your skills or request help from others. Let’s learn and grow together!
+            </p>
+
+            <div className="card shadow-sm p-4 mb-4 bg-light">
+              <h5 className="text-secondary fw-semibold mb-3">Share Your Skill</h5>
+              <input
+                type="text"
+                className="form-control mb-2"
+                placeholder="Skill title (e.g., Web Development, Data Analysis)"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+              />
+              <textarea
+                className="form-control mb-3"
+                rows="3"
+                placeholder="Describe what you can teach..."
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+              ></textarea>
+              <button className="btn btn-success" onClick={handleAddSkill}>
+                Post Skill
+              </button>
+            </div>
+
+            <div className="row">
+              {skills.length === 0 ? (
+                <div className="text-center text-muted mt-5">
+                  <h5>No skills shared yet 🚀</h5>
+                  <p>Be the first to start collaborating!</p>
+                </div>
+              ) : (
+                skills.map((skill) => (
+                  <div key={skill.id} className="col-md-6 mb-4">
+                    <div className="card shadow-sm p-3 border-0 h-100">
+                      <h5 className="text-primary">{skill.title}</h5>
+                      <p className="mb-2">{skill.description}</p>
+                      <small className="text-muted">
+                        Posted by: {skill.userName || "Anonymous"}
+                      </small>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Profile */}
+        {view === "profile" && (
+          profile ? (
+            <div className="card shadow p-4">
+              <h3 className="text-primary">{profile.name}</h3>
+              <h6 className="text-muted mb-3">
+                {profile.role?.toUpperCase()} • {profile.branch || "N/A"}
+              </h6>
+              <p><strong>Bio:</strong> {profile.bio || "Not provided"}</p>
+              <p><strong>Skills:</strong> {profile.skills || "Not specified"}</p>
+              <p><strong>Interests:</strong> {profile.interests || "Not specified"}</p>
+              <p><strong>Contact:</strong> {profile.contact || "N/A"}</p>
+            </div>
+          ) : (
+            <div className="text-center text-muted mt-5">
+              No profile data found. Try refreshing or re-signing up.
+            </div>
+          )
         )}
       </div>
     </div>
