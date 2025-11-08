@@ -22,26 +22,22 @@ import "./index.css";
 import ForumPost from "./ForumPost.jsx";
 
 export default function App() {
-  // Auth + navigation state
+  // 🔹 Core states
   const [user, setUser] = useState(null);
   const [view, setView] = useState("login");
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
 
-  // Posts for Home preview (separate from forumMessages used by chat)
+  // 🔹 Forum & posts
   const [posts, setPosts] = useState([]);
   const [postText, setPostText] = useState("");
 
-  // Forum chat messages are handled inside ForumPost component (forumMessages collection)
-
-  // Profile state
-  const [profile, setProfile] = useState(null);
-
-  // Skill Barter System state
+  // 🔹 Skill Barter system
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-  // ---------- Auth listener ----------
+  // ---------- Auth Listener ----------
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -51,7 +47,7 @@ export default function App() {
     return () => unsubAuth();
   }, []);
 
-  // ---------- posts listener (for Home preview) ----------
+  // ---------- Fetch Posts ----------
   useEffect(() => {
     const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -60,21 +56,18 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // ---------- skills listener ----------
+  // ---------- Fetch Skills ----------
   useEffect(() => {
     const q = query(collection(db, "skills"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setSkills(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    const unsub = onSnapshot(q, (snap) => {
+      setSkills(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  // ---------- user profile fetch (on login) ----------
+  // ---------- Fetch Profile ----------
   useEffect(() => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
+    if (!user) return;
     const fetchProfile = async () => {
       const q = query(collection(db, "profiles"), where("uid", "==", user.uid));
       const snap = await getDocs(q);
@@ -83,7 +76,7 @@ export default function App() {
     fetchProfile();
   }, [user]);
 
-  // ---------- Signup ----------
+  // ---------- Auth Handlers ----------
   const signup = async (e) => {
     e.preventDefault();
     const name = e.target.name.value;
@@ -99,7 +92,6 @@ export default function App() {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: name });
-
       await addDoc(collection(db, "profiles"), {
         uid: cred.user.uid,
         name,
@@ -112,14 +104,12 @@ export default function App() {
         contact,
         createdAt: serverTimestamp(),
       });
-
       setView("home");
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // ---------- Login ----------
   const login = async (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -131,12 +121,11 @@ export default function App() {
     }
   };
 
-  // ---------- Logout ----------
   const logout = async () => {
     await signOut(auth);
   };
 
-  // ---------- Create a short post (for home preview) ----------
+  // ---------- Post creation ----------
   const handleCreatePost = async () => {
     if (!postText.trim()) {
       alert("Please enter something before posting!");
@@ -147,22 +136,19 @@ export default function App() {
         text: postText.trim(),
         userName: user?.displayName || user?.email || "Anonymous",
         createdAt: serverTimestamp(),
-        likes: 0,
       });
       setPostText("");
     } catch (error) {
       console.error("Error adding post:", error);
-      alert("Error creating post: " + error.message);
     }
   };
 
-  // ---------- Add skill (skill barter) ----------
+  // ---------- Skill creation ----------
   const handleAddSkill = async () => {
     if (!newSkill.trim() || !newDescription.trim()) {
       alert("Please fill out both fields before posting.");
       return;
     }
-
     try {
       await addDoc(collection(db, "skills"), {
         title: newSkill.trim(),
@@ -174,10 +160,10 @@ export default function App() {
       setNewDescription("");
     } catch (error) {
       console.error("Error adding skill:", error);
-      alert("Error posting skill: " + error.message);
     }
   };
 
+  // -------------------- Loading --------------------
   if (loading) return <div className="p-5 text-center">Loading...</div>;
 
   // -------------------- LOGIN --------------------
@@ -186,17 +172,14 @@ export default function App() {
       <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
         <div className="card shadow p-4" style={{ width: 400 }}>
           <h3 className="text-center text-primary mb-3">VNRVJIET Connect</h3>
-          <h5 className="text-center mb-3">Login</h5>
           <form onSubmit={login}>
             <input name="email" type="email" className="form-control mb-3" placeholder="Email" required />
             <input name="password" type="password" className="form-control mb-3" placeholder="Password" required />
-            <div className="d-grid">
-              <button className="btn btn-primary w-100">Login</button>
-            </div>
+            <button className="btn btn-primary w-100">Login</button>
           </form>
           <p className="text-center mt-3">
-            Don’t have an account?{" "}
-            <button className="btn btn-link p-0" onClick={() => setView("signup")}>Sign Up</button>
+            No account?{" "}
+            <button className="btn btn-link p-0" onClick={() => setView("signup")}>Sign up</button>
           </p>
         </div>
       </div>
@@ -208,7 +191,6 @@ export default function App() {
       <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
         <div className="card shadow p-4" style={{ width: 460 }}>
           <h3 className="text-center text-primary mb-3">VNRVJIET Connect</h3>
-          <h5 className="text-center mb-3">Create Your Profile</h5>
           <form onSubmit={signup}>
             <input name="name" className="form-control mb-3" placeholder="Full name" required />
             <input name="email" className="form-control mb-3" placeholder="Email" required />
@@ -231,17 +213,15 @@ export default function App() {
               <option>CIVIL</option>
             </select>
 
-            <textarea name="bio" className="form-control mb-3" rows="2" placeholder="Short bio about you"></textarea>
-            <input name="skills" className="form-control mb-3" placeholder="Skills (e.g., Python, React, SQL)" />
-            <input name="interests" className="form-control mb-3" placeholder="Interests (e.g., AI, Robotics, Design)" />
-            <input name="contact" className="form-control mb-3" placeholder="Contact info (Email / LinkedIn)" />
+            <textarea name="bio" className="form-control mb-3" rows="2" placeholder="Short bio"></textarea>
+            <input name="skills" className="form-control mb-3" placeholder="Skills (e.g., Python, React)" />
+            <input name="interests" className="form-control mb-3" placeholder="Interests (e.g., AI, Robotics)" />
+            <input name="contact" className="form-control mb-3" placeholder="Contact (Email/LinkedIn)" />
 
-            <div className="d-grid">
-              <button className="btn btn-success w-100">Sign Up</button>
-            </div>
+            <button className="btn btn-success w-100">Sign Up</button>
           </form>
           <p className="text-center mt-3">
-            Already have an account?{" "}
+            Already registered?{" "}
             <button className="btn btn-link p-0" onClick={() => setView("login")}>Login</button>
           </p>
         </div>
@@ -256,139 +236,143 @@ export default function App() {
         <div className="ms-auto d-flex gap-2">
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("home")}>Home</button>
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("forum")}>Forum</button>
-          <button className="btn btn-sm btn-outline-light" onClick={() => setView("profile")}>Profile</button>
           <button className="btn btn-sm btn-outline-light" onClick={() => setView("skills")}>Skill Barter</button>
+          <button className="btn btn-sm btn-outline-light" onClick={() => setView("profile")}>Profile</button>
           <button className="btn btn-sm btn-danger" onClick={logout}>Logout</button>
         </div>
       </nav>
 
       <div className="container mt-4">
-        {view === "home" && (
-          <div className="container mt-4">
-            <div className="text-center mb-4">
-              <h2 className="fw-bold text-primary">Welcome to VNRVJIET Connect 🎓</h2>
-              <p className="text-muted">
-                Stay connected, collaborate, and grow with your peers, faculty, and alumni.
-              </p>
-            </div>
+        {/* -------------------- HOME -------------------- */}
+       {view === "home" && (
+  <div className="container mt-4">
+    <div className="text-center mb-5">
+      <h2 className="fw-bold text-primary">Welcome to VNRVJIET Connect 🎓</h2>
+      <p className="text-muted">
+        Stay updated with campus happenings, collaborate with peers, and discover new opportunities.
+      </p>
+    </div>
 
-            {/* Events & Announcements (same as before) */}
-            <div className="row g-4 mb-5">
-              <div className="col-md-6">
-                <div className="card border-0 shadow-sm p-4 h-100 bg-light">
-                  <h4 className="text-primary mb-3">Upcoming Events 📅</h4>
-                  <ul className="list-unstyled">
-                    <li className="mb-3">
-                      <strong>Hackathon 2025</strong><br />
-                      <small>24–26 March • CSE Dept</small><br />
-                      <span className="badge bg-success mt-1">Register Open</span>
-                    </li>
-                    <li className="mb-3">
-                      <strong>AI Workshop</strong><br />
-                      <small>2 April • Seminar Hall</small>
-                    </li>
-                    <li>
-                      <strong>Alumni Talk: Career in Product Design</strong><br />
-                      <small>10 April • Auditorium</small>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+    {/* --- Upcoming Events --- */}
+    <div className="row g-4 mb-5">
+      <div className="col-md-6">
+        <div className="card border-0 shadow-sm p-4 h-100 bg-light">
+          <h4 className="text-primary mb-3">📅 Upcoming Events</h4>
+          <ul className="list-unstyled">
+            <li className="mb-3">
+              <strong>Hackathon 2025</strong><br />
+              <small>March 24–26 • CSE Dept</small><br />
+              <span className="badge bg-success mt-1">Registrations Open</span>
+            </li>
+            <li className="mb-3">
+              <strong>AI Workshop</strong><br />
+              <small>April 2 • Seminar Hall</small>
+            </li>
+            <li>
+              <strong>Alumni Talk: Product Design Careers</strong><br />
+              <small>April 10 • Main Auditorium</small>
+            </li>
+          </ul>
+        </div>
+      </div>
 
-              <div className="col-md-6">
-                <div className="card border-0 shadow-sm p-4 h-100 bg-light">
-                  <h4 className="text-primary mb-3">College News 📰</h4>
-                  <div className="news-item mb-3">
-                    <strong>VNRVJIET ranked among Top 10 private colleges</strong>
-                    <p className="small text-muted mb-0">
-                      Recognized by NIRF 2025 for excellence in innovation & research.
-                    </p>
-                  </div>
-                  <div className="news-item mb-3">
-                    <strong>New Center for Robotics launched</strong>
-                    <p className="small text-muted mb-0">
-                      Collaboration with IIT Hyderabad to boost automation learning.
-                    </p>
-                  </div>
-                  <div className="news-item">
-                    <strong>Admissions 2025 opening soon</strong>
-                    <p className="small text-muted mb-0">
-                      Stay tuned for official circulars and registration updates.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Forum Preview */}
-            <div className="card shadow-sm p-4 mb-5 bg-white">
-              <h4 className="text-primary mb-3">Recent Discussions 💬</h4>
-              {posts.length === 0 ? (
-                <p className="text-muted">
-                  No discussions yet. <span className="link-primary" onClick={() => setView("forum")}>Start one in the Forum!</span>
-                </p>
-              ) : (
-                posts.slice(0, 3).map((p) => (
-                  <div key={p.id} className="border-bottom pb-2 mb-3">
-                    <strong>{p.userName}</strong>
-                    <p className="mb-1">{p.text}</p>
-                    <small className="text-muted">
-                      {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
-                    </small>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Quick post (for Home preview) */}
-            <div className="card p-3 mb-4">
-              <textarea className="form-control mb-2" rows="2" value={postText} onChange={(e) => setPostText(e.target.value)} placeholder="Share a quick update..."></textarea>
-              <div className="d-flex gap-2">
-                <button className="btn btn-primary" onClick={handleCreatePost}>Post</button>
-              </div>
-            </div>
-
-            {/* Skill Exchange preview */}
-            <div className="card shadow-sm p-4 bg-light">
-              <h4 className="text-primary mb-3">Skill Exchange 🤝</h4>
-              <p className="text-muted mb-3">
-                Share your skills or learn from others in the VNRVJIET community.
-              </p>
-              <div className="d-flex flex-wrap gap-3">
-                {skills.slice(0,3).map(s => (
-                  <div key={s.id} className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
-                    <h6 className="fw-bold mb-1">{s.title}</h6>
-                    <small>Offered by: {s.userName}</small>
-                  </div>
-                ))}
-                {skills.length === 0 && (
-                  <>
-                    <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
-                      <h6 className="fw-bold mb-1">No skills yet</h6>
-                      <small>Be the first to post</small>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+      {/* --- College News --- */}
+      <div className="col-md-6">
+        <div className="card border-0 shadow-sm p-4 h-100 bg-light">
+          <h4 className="text-primary mb-3">📰 College News</h4>
+          <div className="news-item mb-3">
+            <strong>VNRVJIET ranks in Top 10 Private Engineering Colleges</strong>
+            <p className="small text-muted mb-0">
+              Recognized by NIRF 2025 for academic excellence and innovation.
+            </p>
           </div>
-        )}
+          <div className="news-item mb-3">
+            <strong>New Robotics Research Center Launched</strong>
+            <p className="small text-muted mb-0">
+              Collaboration with IIT Hyderabad to promote AI & Automation research.
+            </p>
+          </div>
+          <div className="news-item">
+            <strong>Admissions 2025 Opening Soon</strong>
+            <p className="small text-muted mb-0">
+              Stay tuned for official circulars and registration schedules.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        {/* Forum (chat-style) */}
+    {/* --- Forum Preview --- */}
+    <div className="card shadow-sm p-4 mb-5 bg-white">
+      <h4 className="text-primary mb-3">💬 Recent Discussions</h4>
+      {posts.length === 0 ? (
+        <p className="text-muted">
+          No discussions yet.{" "}
+          <span
+            className="text-primary fw-semibold"
+            style={{ cursor: "pointer" }}
+            onClick={() => setView("forum")}
+          >
+            Start one in the Forum!
+          </span>
+        </p>
+      ) : (
+        posts.slice(0, 3).map((p) => (
+          <div key={p.id} className="border-bottom pb-2 mb-3">
+            <strong>{p.userName}</strong>
+            <p className="mb-1">{p.text}</p>
+            <small className="text-muted">
+              {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
+            </small>
+          </div>
+        ))
+      )}
+    </div>
+
+    {/* --- Skill Exchange Highlights --- */}
+    <div className="card shadow-sm p-4 bg-light">
+      <h4 className="text-primary mb-3">🤝 Skill Exchange Highlights</h4>
+      <p className="text-muted mb-3">
+        Share your skills or learn from others in the VNRVJIET community.
+      </p>
+      <div className="d-flex flex-wrap gap-3">
+        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+          <h6 className="fw-bold mb-1">Python & Data Science</h6>
+          <small>Offered by: Harika (CSE)</small>
+        </div>
+        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+          <h6 className="fw-bold mb-1">UI/UX Design</h6>
+          <small>Looking to Learn</small>
+        </div>
+        <div className="p-3 border rounded bg-white shadow-sm flex-fill text-center">
+          <h6 className="fw-bold mb-1">Machine Learning Basics</h6>
+          <small>Offered by: Arjun (AI)</small>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
+        {/* -------------------- FORUM -------------------- */}
         {view === "forum" && (
           <div className="container mt-4">
-            <ForumPost db={db} user={user} />
+            {db && user ? (
+              <ForumPost db={db} user={user} />
+            ) : (
+              <div className="text-center text-muted mt-5">Loading forum...</div>
+            )}
           </div>
         )}
 
-        {/* Skill Barter */}
+        {/* -------------------- SKILL BARTER -------------------- */}
         {view === "skills" && (
           <div className="container mt-4">
             <h2 className="text-center text-primary fw-bold mb-3">
               Skill-Sharing & Barter System 🤝
             </h2>
             <p className="text-muted text-center mb-4">
-              Offer your skills or request help from others. Let’s learn and grow together!
+              Offer your skills or request help from others.
             </p>
 
             <div className="card shadow-sm p-4 mb-4 bg-light">
@@ -403,7 +387,7 @@ export default function App() {
               <textarea
                 className="form-control mb-3"
                 rows="3"
-                placeholder="Describe what you can teach..."
+                placeholder="Describe your skill or request..."
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
               ></textarea>
@@ -413,10 +397,10 @@ export default function App() {
             </div>
 
             <div className="row">
-              {skills.length === 0 ? (
+              {!skills || skills.length === 0 ? (
                 <div className="text-center text-muted mt-5">
                   <h5>No skills shared yet 🚀</h5>
-                  <p>Be the first to start collaborating!</p>
+                  <p>Be the first to collaborate!</p>
                 </div>
               ) : (
                 skills.map((skill) => (
@@ -435,7 +419,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Profile */}
+        {/* -------------------- PROFILE -------------------- */}
         {view === "profile" && (
           profile ? (
             <div className="card shadow p-4">
@@ -450,7 +434,7 @@ export default function App() {
             </div>
           ) : (
             <div className="text-center text-muted mt-5">
-              No profile data found. Try refreshing or re-signing up.
+              No profile data found. Try refreshing.
             </div>
           )
         )}
