@@ -19,15 +19,19 @@ import {
 import { auth, db } from "./firebase";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
-import ForumPost from "./ForumPost.jsx";
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [view, setView] = useState("signup"); // 👈 start from signup
+  const [view, setView] = useState("signup"); // default view → signup
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+
+  // Forum states
   const [posts, setPosts] = useState([]);
   const [postText, setPostText] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
+
+  // Skill barter system
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -41,6 +45,7 @@ export default function App() {
     return () => unsubAuth();
   }, []);
 
+  // Fetch forum posts
   useEffect(() => {
     const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -49,6 +54,7 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Fetch skills
   useEffect(() => {
     const q = query(collection(db, "skills"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -57,6 +63,7 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Fetch user profile
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
@@ -115,6 +122,28 @@ export default function App() {
     await signOut(auth);
   };
 
+  const handleCreatePost = async () => {
+    if (!postText.trim()) {
+      alert("Please enter something before posting!");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "posts"), {
+        text: postText.trim(),
+        userName: anonymous
+          ? "Anonymous"
+          : user?.displayName || user?.email || "Anonymous",
+        createdAt: serverTimestamp(),
+      });
+      setPostText("");
+      setAnonymous(false);
+    } catch (error) {
+      console.error("Error adding post:", error);
+      alert("Error creating post: " + error.message);
+    }
+  };
+
   const handleAddSkill = async () => {
     if (!newSkill.trim() || !newDescription.trim()) {
       alert("Please fill out both fields before posting.");
@@ -132,33 +161,12 @@ export default function App() {
       setNewDescription("");
     } catch (error) {
       console.error("Error adding skill:", error);
-      alert("Error posting skill: " + error.message);
-    }
-  };
-
-  const handleCreatePost = async () => {
-    if (!postText.trim()) {
-      alert("Please enter something before posting!");
-      return;
-    }
-
-    try {
-      await addDoc(collection(db, "posts"), {
-        text: postText,
-        userName: user?.email || "Anonymous",
-        createdAt: serverTimestamp(),
-        likes: 0,
-      });
-      setPostText("");
-    } catch (error) {
-      console.error("Error adding post:", error);
-      alert("Error creating post: " + error.message);
     }
   };
 
   if (loading) return <div className="p-5 text-center">Loading...</div>;
 
-  // -------------------- SIGNUP (default first) --------------------
+  // -------------------- SIGNUP PAGE --------------------
   if (!user && view === "signup")
     return (
       <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
@@ -210,7 +218,7 @@ export default function App() {
       </div>
     );
 
-  // -------------------- LOGIN --------------------
+  // -------------------- LOGIN PAGE --------------------
   if (!user && view === "login")
     return (
       <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
@@ -247,7 +255,7 @@ export default function App() {
       </nav>
 
       <div className="container mt-4">
-        {/* 🏠 Restored Old Home Page */}
+        {/* ---------- HOME ---------- */}
         {view === "home" && (
           <div className="container mt-4">
             <div className="text-center mb-5">
@@ -257,7 +265,6 @@ export default function App() {
               </p>
             </div>
 
-            {/* --- Upcoming Events & College News --- */}
             <div className="row g-4 mb-5">
               <div className="col-md-6">
                 <div className="card border-0 shadow-sm p-4 h-100 bg-light">
@@ -305,7 +312,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* --- Forum Preview --- */}
             <div className="card shadow-sm p-4 mb-5 bg-white">
               <h4 className="text-primary mb-3">💬 Recent Discussions</h4>
               {posts.length === 0 ? (
@@ -332,7 +338,6 @@ export default function App() {
               )}
             </div>
 
-            {/* --- Skill Exchange Highlights --- */}
             <div className="card shadow-sm p-4 bg-light">
               <h4 className="text-primary mb-3">🤝 Skill Exchange Highlights</h4>
               <p className="text-muted mb-3">
@@ -356,16 +361,69 @@ export default function App() {
           </div>
         )}
 
-        {/* Forum & Skill Barter unchanged */}
+        {/* ---------- FORUM ---------- */}
         {view === "forum" && (
           <div className="container mt-4">
-            {db && user ? <ForumPost db={db} user={user} /> : <div className="text-center text-muted mt-5">Loading forum...</div>}
+            <h2 className="text-center fw-bold text-primary mb-4">VNRVJIET Forum 💬</h2>
+            <p className="text-muted text-center mb-4">
+              Ask questions, share ideas, and collaborate with your peers!
+            </p>
+
+            <div className="card shadow-sm p-4 mb-4 bg-light">
+              <h5 className="text-secondary fw-semibold mb-3">Create a New Discussion</h5>
+              <textarea
+                className="form-control mb-3"
+                placeholder="Type your question, idea, or topic..."
+                rows="3"
+                value={postText}
+                onChange={(e) => setPostText(e.target.value)}
+              ></textarea>
+
+              <div className="form-check mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="anonymousCheck"
+                  checked={anonymous}
+                  onChange={(e) => setAnonymous(e.target.checked)}
+                />
+                <label className="form-check-label text-muted" htmlFor="anonymousCheck">
+                  Post as Anonymous
+                </label>
+              </div>
+
+              <button className="btn btn-primary px-4" onClick={handleCreatePost}>
+                Post
+              </button>
+            </div>
+
+            <div className="forum-feed">
+              {posts.length === 0 ? (
+                <div className="text-center text-muted mt-5">
+                  <h5>No discussions yet 🚀</h5>
+                  <p>Start the first one above!</p>
+                </div>
+              ) : (
+                posts.map((p) => (
+                  <div key={p.id} className="card mb-3 p-3 shadow-sm">
+                    <strong>{p.userName}</strong>
+                    <p className="mb-1">{p.text}</p>
+                    <small className="text-muted">
+                      {p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString() : ""}
+                    </small>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 
+        {/* ---------- SKILL BARTER ---------- */}
         {view === "skills" && (
           <div className="container mt-4">
-            <h2 className="text-center text-primary fw-bold mb-3">Skill-Sharing & Barter System 🤝</h2>
+            <h2 className="text-center text-primary fw-bold mb-3">
+              Skill-Sharing & Barter System 🤝
+            </h2>
             <p className="text-muted text-center mb-4">
               Offer your skills or request help from others. Let’s learn and grow together!
             </p>
@@ -414,6 +472,7 @@ export default function App() {
           </div>
         )}
 
+        {/* ---------- PROFILE ---------- */}
         {view === "profile" && profile && (
           <div className="card shadow p-4">
             <h3 className="text-primary">{profile.name}</h3>
