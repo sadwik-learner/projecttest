@@ -26,14 +26,15 @@ export default function ForumPost({ db, user }) {
     try {
      await addDoc(collection(db, "forumMessages"), {
   text: input.trim(),
+  // Show "Anonymous" in frontend but save email privately
   userName: anonymous
     ? "Anonymous"
     : user?.displayName || "Anonymous",
-  userEmail: anonymous
-    ? "Hidden"
-    : user?.email || "No email",
+  userEmail: user?.email || "No email", // always stored
+  anonymous: anonymous, // flag to identify anonymous posts
   createdAt: serverTimestamp(),
 });
+
 
 
       setInput("");
