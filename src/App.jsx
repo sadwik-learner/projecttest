@@ -169,27 +169,68 @@ export default function App() {
   // -------------------- SIGNUP PAGE --------------------
   if (!user && view === "signup")
   return (
-    <div className="min-vh-100 d-flex justify-content-center align-items-start bg-light py-5">
+    <div className="d-flex flex-column flex-lg-row min-vh-100 bg-light">
+      {/* Left Panel */}
       <div
-        className="card shadow-lg p-5 mt-4"
+        className="d-none d-lg-flex flex-column justify-content-center align-items-center text-white p-5"
         style={{
-          width: "500px",
-          borderRadius: "15px",
-          backgroundColor: "#ffffff",
+          flex: 1,
+          background:
+            "linear-gradient(135deg, #0d6efd, #002B5B)",
         }}
       >
-        <h3 className="text-center text-primary fw-bold mb-3">
+        <img
+          src="https://th.bing.com/th/id/R.4a5a50149b3328a690a8474f4ca9af37?rik=YrjMjynl81m0Iw&riu=http%3a%2f%2fvnrvjietcsi.com%2fassets%2fvnr_logo-um4qrAXU.png&ehk=s5AzPWR8AsUaLMuX5Flcn8NZgG72nr9%2bbgTKK2yx1CU%3d&risl=&pid=ImgRaw&r=0"
+          alt="VNRVJIET Logo"
+          style={{ width: "180px", marginBottom: "20px" }}
+        />
+        <h2 className="fw-bold text-center">
           VNRVJIET Connect
-        </h3>
-        <h5 className="text-center mb-4 text-secondary">
-          Create Your Profile
-        </h5>
+        </h2>
+        <p className="text-center" style={{ maxWidth: "300px", fontSize: "15px" }}>
+          Collaborate, Learn, and Grow Together — A digital community for Students, Faculty & Alumni.
+        </p>
+      </div>
 
+      {/* Right Panel (Signup Form) */}
+      <div
+        className="d-flex flex-column justify-content-center align-items-center p-4 p-md-5"
+        style={{ flex: 1.2, backgroundColor: "#f8f9fa" }}
+      >
+        <div
+          className="card shadow-lg p-4 p-md-5"
+          style={{
+            width: "100%",
+            maxWidth: "480px",
+            borderRadius: "15px",
+            backgroundColor: "#ffffff",
+          }}
+        >
+          <h3 className="text-center text-primary fw-bold mb-3">
+            Create Your Profile
+          </h3>
 
           <form onSubmit={signup}>
-            <input name="name" className="form-control mb-3" placeholder="Full Name" required />
-            <input name="email" type="email" className="form-control mb-3" placeholder="Email" required />
-            <input name="password" type="password" className="form-control mb-3" placeholder="Password" required />
+            <input
+              name="name"
+              className="form-control mb-3"
+              placeholder="Full Name"
+              required
+            />
+            <input
+              name="email"
+              type="email"
+              className="form-control mb-3"
+              placeholder="Email"
+              required
+            />
+            <input
+              name="password"
+              type="password"
+              className="form-control mb-3"
+              placeholder="Password"
+              required
+            />
 
             <label className="form-label fw-semibold">Role</label>
             <select name="role" className="form-select mb-3" required>
@@ -210,25 +251,51 @@ export default function App() {
               <option>CIVIL</option>
             </select>
 
-            <textarea name="bio" className="form-control mb-3" rows="2" placeholder="Short bio about you"></textarea>
-            <input name="skills" className="form-control mb-3" placeholder="Skills (e.g., Python, React, SQL)" />
-            <input name="interests" className="form-control mb-3" placeholder="Interests (e.g., AI, Robotics, Design)" />
-            <input name="contact" className="form-control mb-4" placeholder="Contact info (Email / LinkedIn)" />
+            <textarea
+              name="bio"
+              className="form-control mb-3"
+              rows="2"
+              placeholder="Short bio about you"
+            ></textarea>
+            <input
+              name="skills"
+              className="form-control mb-3"
+              placeholder="Skills (e.g., Python, React, SQL)"
+            />
+            <input
+              name="interests"
+              className="form-control mb-3"
+              placeholder="Interests (e.g., AI, Robotics, Design)"
+            />
+            <input
+              name="contact"
+              className="form-control mb-4"
+              placeholder="Contact info (Email / LinkedIn)"
+            />
 
-            <button type="submit" className="btn btn-success w-100 py-2 fw-semibold" style={{ borderRadius: "8px" }}>
+            <button
+              type="submit"
+              className="btn btn-success w-100 py-2 fw-semibold"
+              style={{ borderRadius: "8px" }}
+            >
               Sign Up
             </button>
           </form>
 
           <p className="text-center mt-3 mb-0">
             Already have an account?{" "}
-            <button className="btn btn-link p-0 text-primary fw-semibold" onClick={() => setView("login")}>
+            <button
+              className="btn btn-link p-0 text-primary fw-semibold"
+              onClick={() => setView("login")}
+            >
               Login
             </button>
           </p>
         </div>
       </div>
-    );
+    </div>
+  );
+
 
   // -------------------- LOGIN PAGE --------------------
   if (!user && view === "login")
