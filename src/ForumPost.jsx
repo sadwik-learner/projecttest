@@ -26,10 +26,15 @@ export default function ForumPost({ db, user }) {
     try {
      await addDoc(collection(db, "forumMessages"), {
   text: input.trim(),
-  userName: user?.displayName || "Anonymous",
-  userEmail: user?.email || "No email",
+  userName: anonymous
+    ? "Anonymous"
+    : user?.displayName || "Anonymous",
+  userEmail: anonymous
+    ? "Hidden"
+    : user?.email || "No email",
   createdAt: serverTimestamp(),
 });
+
 
       setInput("");
     } catch (err) {
