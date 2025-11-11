@@ -170,29 +170,41 @@ export default function App() {
   if (!user && view === "signup")
   return (
     <div className="d-flex flex-column flex-lg-row min-vh-100 bg-light">
-      {/* Left Panel */}
+      {/* ---------- Left Panel ---------- */}
       <div
         className="d-none d-lg-flex flex-column justify-content-center align-items-center text-white p-5"
         style={{
           flex: 1,
-          background:
-            "linear-gradient(135deg, #0d6efd, #002B5B)",
+          background: "linear-gradient(135deg, #0059ff, #003366)",
         }}
       >
         <img
           src="https://th.bing.com/th/id/R.4a5a50149b3328a690a8474f4ca9af37?rik=YrjMjynl81m0Iw&riu=http%3a%2f%2fvnrvjietcsi.com%2fassets%2fvnr_logo-um4qrAXU.png&ehk=s5AzPWR8AsUaLMuX5Flcn8NZgG72nr9%2bbgTKK2yx1CU%3d&risl=&pid=ImgRaw&r=0"
           alt="VNRVJIET Logo"
-          style={{ width: "180px", marginBottom: "20px" }}
+          style={{
+            width: "320px",
+            marginBottom: "25px",
+            filter:
+              "brightness(1.3) contrast(1.1) drop-shadow(0 0 10px rgba(255,255,255,0.5))",
+          }}
         />
-        <h2 className="fw-bold text-center">
+        <h2 className="fw-bold text-center mb-3">
           VNRVJIET Connect
         </h2>
-        <p className="text-center" style={{ maxWidth: "300px", fontSize: "15px" }}>
-          Collaborate, Learn, and Grow Together — A digital community for Students, Faculty & Alumni.
+        <p
+          className="text-center"
+          style={{
+            maxWidth: "340px",
+            fontSize: "16px",
+            lineHeight: "1.6",
+          }}
+        >
+          Collaborate, Learn, and Grow Together — <br /> A digital
+          community for Students, Faculty & Alumni.
         </p>
       </div>
 
-      {/* Right Panel (Signup Form) */}
+      {/* ---------- Right Panel (Signup Form) ---------- */}
       <div
         className="d-flex flex-column justify-content-center align-items-center p-4 p-md-5"
         style={{ flex: 1.2, backgroundColor: "#f8f9fa" }}
