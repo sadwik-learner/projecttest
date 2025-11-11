@@ -24,11 +24,13 @@ export default function ForumPost({ db, user }) {
   const sendMessage = async () => {
     if (!input.trim()) return;
     try {
-      await addDoc(collection(db, "forumMessages"), {
-        text: input.trim(),
-        userName: user?.displayName || user?.email || "Anonymous",
-        createdAt: serverTimestamp(),
-      });
+     await addDoc(collection(db, "forumMessages"), {
+  text: input.trim(),
+  userName: user?.displayName || "Anonymous",
+  userEmail: user?.email || "No email",
+  createdAt: serverTimestamp(),
+});
+
       setInput("");
     } catch (err) {
       console.error("Error sending message:", err);

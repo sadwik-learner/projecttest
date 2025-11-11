@@ -130,12 +130,13 @@ export default function App() {
 
     try {
       await addDoc(collection(db, "posts"), {
-        text: postText.trim(),
-        userName: anonymous
-          ? "Anonymous"
-          : user?.displayName || user?.email || "Anonymous",
-        createdAt: serverTimestamp(),
-      });
+  text: postText,
+  userName: user?.displayName || "Anonymous",
+  userEmail: user?.email || "No email",
+  createdAt: serverTimestamp(),
+  likes: 0,
+});
+
       setPostText("");
       setAnonymous(false);
     } catch (error) {
