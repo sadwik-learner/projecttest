@@ -168,11 +168,23 @@ export default function App() {
 
   // -------------------- SIGNUP PAGE --------------------
   if (!user && view === "signup")
-    return (
-      <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
-        <div className="card shadow-lg p-4" style={{ width: "480px", borderRadius: "15px" }}>
-          <h3 className="text-center text-primary fw-bold mb-3">VNRVJIET Connect</h3>
-          <h5 className="text-center mb-4 text-secondary">Create Your Profile</h5>
+  return (
+    <div className="min-vh-100 d-flex justify-content-center align-items-start bg-light py-5">
+      <div
+        className="card shadow-lg p-5 mt-4"
+        style={{
+          width: "500px",
+          borderRadius: "15px",
+          backgroundColor: "#ffffff",
+        }}
+      >
+        <h3 className="text-center text-primary fw-bold mb-3">
+          VNRVJIET Connect
+        </h3>
+        <h5 className="text-center mb-4 text-secondary">
+          Create Your Profile
+        </h5>
+
 
           <form onSubmit={signup}>
             <input name="name" className="form-control mb-3" placeholder="Full Name" required />
